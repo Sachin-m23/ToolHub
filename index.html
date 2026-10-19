@@ -281,8 +281,8 @@ footer { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap;
       </button>
       <button class="tile" data-tool="portfolio" aria-pressed="false" aria-controls="panel">
         <span class="tile-top"><span>Portfolio construction</span><span class="tile-state">Select</span></span>
-        <span class="tile-name">Portfolio Optimisation</span>
-        <span class="tile-stat">Monte Carlo · efficient frontier</span>
+        <span class="tile-name">Portfolio Optimiser</span>
+        <span class="tile-stat">Any tickers · S&amp;P 500 benchmark</span>
       </button>
       <button class="tile" data-tool="monitor" aria-pressed="false" aria-controls="panel">
         <span class="tile-top"><span>Company research</span><span class="tile-state">Select</span></span>
@@ -294,7 +294,7 @@ footer { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap;
     <section class="panel" id="panel" data-tool="dcf" aria-live="polite"></section>
 
     <footer>
-      <span>Built with HTML, CSS and JavaScript. DCF, Comps and the Equity Monitor use live data from Financial Modelling Prep.</span>
+      <span>Built with HTML, CSS and JavaScript. Every tool uses live data from Financial Modelling Prep.</span>
       <span>Each tool opens in a new tab.</span>
     </footer>
   </div>
@@ -364,32 +364,70 @@ const TOOLS = {
     ]
   },
   portfolio: {
-    eyebrow: "Portfolio construction · MPT",
-    name: "Portfolio Optimisation Dashboard",
-    url: "https://sachin-m23.github.io/portfolio-dashboard/",
-    summary: "Applies Modern Portfolio Theory and Monte Carlo simulation to build an efficient frontier from your own price history, then optimises allocation and reports risk, return, Sharpe ratio, correlation, drawdown and diversification.",
-    chips: ["Upload .xlsx / .csv", "Monte Carlo", "Efficient frontier", "Sharpe ratio", "Drawdowns"],
-    facts: [["MPT", "mean-variance framework"], ["Daily", "closing prices as input"], [".xlsx", "or .csv accepted"], ["In-browser", "no install needed"]],
-    left: [
-      { h: "How to use it", steps: [
-        "Prepare daily closing prices for each asset, or use the Portfolio_Example file.",
-        "Make sure each asset has a Close price column.",
-        "Upload the file to the dashboard.",
-        "Review the efficient frontier, optimal weights and portfolio analytics."
-      ]},
-      { h: "Data requirements", p: [
-        "Historical daily market data in Excel (.xlsx) or CSV (.csv). The Close column for each asset drives the return calculations, the optimisation and every analytic on the page."
-      ]}
+    "eyebrow": "Portfolio construction · MPT",
+    "name": "Portfolio Optimiser",
+    "url": "https://sachin-m23.github.io/portfolio-dashboard/",
+    "summary": "Applies Modern Portfolio Theory and Monte Carlo simulation to find the best asset allocation for your own portfolio. Enter your holdings by ticker and the tool pulls historical prices live from FMP, builds four optimised portfolios and benchmarks them against the S&P 500.",
+    "chips": [
+      "FMP API",
+      "Monte Carlo",
+      "Efficient frontier",
+      "S&P 500 benchmark",
+      "Chart.js"
     ],
-    right: [
-      { h: "Analytics", list: [
-        "Efficient frontier from simulated portfolios",
-        "Optimal allocation weights",
-        "Risk, return and Sharpe ratio",
-        "Correlation between assets",
-        "Maximum drawdown",
-        "Diversification analysis"
-      ]}
+    "facts": [
+      [
+        "4,000",
+        "simulated portfolios"
+      ],
+      [
+        "4",
+        "optimised portfolios"
+      ],
+      [
+        "2–50",
+        "assets per portfolio"
+      ],
+      [
+        "1–30%",
+        "weight range per holding"
+      ]
+    ],
+    "left": [
+      {
+        "h": "How it works",
+        "p": [
+          "The tool builds four portfolios: Maximum Sharpe Ratio, Minimum Variance, Highest Realised Return and an Equal Weight baseline. Every holding is kept between 1% and 30% so each portfolio stays diversified.",
+          "The dashboard plots the risk and return of 4,000 simulated portfolios against the best achievable trade-off, then benchmarks performance against the S&P 500 using cumulative growth, drawdowns, rolling Sharpe ratios, beta and correlation. All optimisation runs in the browser, with interactive charts built in Chart.js."
+        ]
+      },
+      {
+        "h": "Data requirements",
+        "p": [
+          "No file upload is needed. Daily price history is fetched automatically from FMP for each ticker entered, along with the S&P 500 as a benchmark. Dividend-adjusted prices are used where the API plan allows.",
+          "Portfolios can hold 2 to 50 assets, with 1, 2, 3 or 5 years of history."
+        ]
+      }
+    ],
+    "right": [
+      {
+        "h": "How to use",
+        "steps": [
+          "Open the dashboard in a web browser.",
+          "Enter the tickers in your portfolio, for example AAPL, MSFT, NVDA, or click “Use example portfolio”.",
+          "Choose the length of price history and set the annual risk-free rate.",
+          "Click “Optimise portfolio”.",
+          "Review the results across the three tabs."
+        ]
+      },
+      {
+        "h": "Results tabs",
+        "list": [
+          "Risk / Return & Weights: the recommended weights for each portfolio",
+          "Comparison: performance against the S&P 500",
+          "Correlation: how closely the holdings move together, and the diversification this gives"
+        ]
+      }
     ]
   },
   monitor: {
