@@ -1,3 +1,4 @@
+Equity Markets Tool Directory
 This website brings together all the financial analysis tools I’ve built in one place. Instead of keeping track of separate links, you can come here to see everything I’ve created and quickly find the right tool for the job.
 
 What you can do here:
