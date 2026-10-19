@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Valuation Toolkit by Sachin Mistry: DCF valuation, comparable company analysis and portfolio optimisation tools.">
+<title>Valuation Toolkit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout: research-portal style. Navy masthead band, three tool cards in muted institutional colours, one report-style detail panel. */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --ink: #16202e;
+  --muted: #5d6878;
+  --line: #dde1e7;
+  --mast: #0f1d33;
+  --mast-ink: #e9edf3;
+  --mast-muted: #9aa6b8;
+  /* tool colours: DCF = navy, Comps = deep green, Portfolio = burgundy */
+  --dcf: #24466f;   --dcf-soft: #eaf0f7;
+  --comps: #1f5c4d; --comps-soft: #e8f2ee;
+  --port: #6e2a3a;  --port-soft: #f5ebed;
+  --on-c: #ffffff;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d131c; --surface: #141c27; --ink: #e5e9ef; --muted: #98a3b3; --line: #253041;
+    --mast: #0a1019; --mast-ink: #e5e9ef; --mast-muted: #8592a5;
+    --dcf: #36628f;   --dcf-soft: #172435;
+    --comps: #2c7563; --comps-soft: #14261f;
+    --port: #8c3c4f;  --port-soft: #2a171c;
+    --on-c: #ffffff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d131c; --surface: #141c27; --ink: #e5e9ef; --muted: #98a3b3; --line: #253041;
+  --mast: #0a1019; --mast-ink: #e5e9ef; --mast-muted: #8592a5;
+  --dcf: #36628f;   --dcf-soft: #172435;
+  --comps: #2c7563; --comps-soft: #14261f;
+  --port: #8c3c4f;  --port-soft: #2a171c;
+  --on-c: #ffffff;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* masthead */
+.mast { background: var(--mast); color: var(--mast-ink); border-bottom: 1px solid var(--line); }
+.mast .inner { padding-block: 36px 92px; display: grid; gap: 10px; }
+.mast-top {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px;
+  font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--mast-muted);
+  padding-bottom: 22px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.mast-top strong { color: var(--mast-ink); font-weight: 600; }
+h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(30px, 4.4vw, 42px);
+  line-height: 1.1;
+  letter-spacing: -.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+.lede { margin: 0; color: var(--mast-muted); max-width: 64ch; font-size: 15.5px; }
+
+main .inner { margin-top: -64px; padding-block: 0 56px; display: grid; gap: 22px; }
+
+/* tool cards */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.tile {
+  --c: var(--dcf);
+  appearance: none; border: 0; font: inherit; text-align: left; cursor: pointer;
+  background: var(--c); color: var(--on-c);
+  border-radius: 6px;
+  padding: 20px 20px 18px;
+  display: grid; gap: 16px;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(10,20,35,.18), 0 8px 24px -14px rgba(10,20,35,.45);
+  transition: box-shadow .15s ease, filter .15s ease;
+}
+.tile[data-tool="comps"] { --c: var(--comps); }
+.tile[data-tool="portfolio"] { --c: var(--port); }
+.tile:hover { filter: brightness(1.07); }
+.tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.tile[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--c), 0 12px 28px -14px rgba(10,20,35,.5); }
+.tile[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 50%; bottom: -11px; transform: translateX(-50%);
+  border: 7px solid transparent; border-top-color: var(--c);
+}
+.tile-top { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+.tile-state {
+  font-size: 10.5px; letter-spacing: .08em; padding: 2px 8px; border-radius: 3px;
+  border: 1px solid rgba(255,255,255,.4);
+}
+.tile[aria-pressed="true"] .tile-state { background: rgba(255,255,255,.95); color: var(--c); border-color: transparent; opacity: 1; }
+.tile-name { font-family: var(--serif); font-weight: 600; font-size: 20px; line-height: 1.25; text-wrap: balance; }
+.tile-stat { font-family: var(--mono); font-size: 12px; opacity: .82; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.18); }
+
+/* detail panel */
+.panel {
+  --c: var(--dcf); --cs: var(--dcf-soft);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--c);
+  border-radius: 6px;
+  margin-top: 4px;
+}
+.panel[data-tool="comps"] { --c: var(--comps); --cs: var(--comps-soft); }
+.panel[data-tool="portfolio"] { --c: var(--port); --cs: var(--port-soft); }
+
+.panel-head {
+  padding: 26px clamp(18px, 3vw, 34px) 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 18px 32px; align-items: flex-start; justify-content: space-between;
+}
+.panel-head > div:first-child { min-width: 0; flex: 1 1 420px; }
+.eyebrow { font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--c); font-weight: 600; }
+.panel h2 {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(22px, 3vw, 28px); line-height: 1.2;
+  margin: 6px 0 10px; text-wrap: balance;
+}
+.summary { margin: 0; max-width: 70ch; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.chip {
+  font-size: 12px; font-weight: 500;
+  padding: 3px 10px; border-radius: 3px;
+  background: var(--cs); color: var(--c);
+  white-space: nowrap;
+}
+.cta { flex: 0 0 auto; display: grid; gap: 8px; justify-items: end; }
+.open {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--c); color: var(--on-c);
+  text-decoration: none; font-weight: 500; font-size: 14.5px;
+  padding: 11px 18px; border-radius: 4px;
+  transition: filter .15s ease;
+}
+.open:hover { filter: brightness(1.1); }
+.open:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.open svg { width: 14px; height: 14px; }
+.url { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; }
+
+.facts {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+.fact { padding: 16px clamp(18px, 3vw, 34px); border-right: 1px solid var(--line); min-width: 0; }
+.fact:last-child { border-right: 0; }
+.fact b { display: block; font-family: var(--serif); font-weight: 600; font-size: 24px; line-height: 1.15; font-variant-numeric: tabular-nums; color: var(--ink); }
+.fact span { font-size: 12.5px; color: var(--muted); }
+
+.panel-body {
+  padding: 26px clamp(18px, 3vw, 34px) 32px;
+  display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px 48px;
+}
+.col { display: grid; gap: 26px; align-content: start; min-width: 0; }
+.block h3 {
+  font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink);
+  margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.block p { margin: 0 0 10px; max-width: 68ch; }
+.block p:last-child { margin-bottom: 0; }
+ul.list { margin: 0; padding: 0; list-style: none; display: grid; }
+ul.list li { padding: 8px 0 8px 18px; border-bottom: 1px solid var(--line); position: relative; }
+ul.list li:last-child { border-bottom: 0; }
+ul.list li::before { content: ""; position: absolute; left: 0; top: 1.05em; width: 6px; height: 6px; background: var(--c); }
+ol.steps { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 12px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+ol.steps li::before {
+  content: counter(s); width: 24px; height: 24px; border-radius: 3px;
+  background: var(--cs); color: var(--c);
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  display: grid; place-items: center; margin-top: 1px;
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.m { font-family: var(--mono); font-size: 12.5px; color: var(--c); font-weight: 500; white-space: nowrap; }
+
+footer { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; padding-top: 4px; }
+
+@media (max-width: 860px) {
+  .panel-body { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fact:nth-child(2) { border-right: 0; }
+  .fact:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .cta { justify-items: start; }
+}
+@media (max-width: 680px) {
+  .tiles { grid-template-columns: 1fr; gap: 10px; }
+  .tile { gap: 10px; padding: 16px; }
+  .tile[aria-pressed="true"]::after { display: none; }
+  .tile-stat { padding-top: 8px; }
+  .open { width: 100%; justify-content: center; }
+  .cta { width: 100%; justify-items: stretch; }
+  .mast .inner { padding-block: 28px 84px; }
+}
+@media (prefers-reduced-motion: reduce) { .tile, .open { transition: none; } }
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="inner">
+    <div class="mast-top"><span><strong>Sachin Mistry</strong> · Financial analysis</span><span>3 tools</span></div>
+    <h1>Valuation Toolkit</h1>
+    <p class="lede">Browser-based tools for intrinsic valuation, relative valuation and portfolio construction. Select a tool to review its methodology and outputs, then open it to run the full analysis.</p>
+  </div>
+</header>
+
+<main>
+  <div class="inner">
+    <nav class="tiles" aria-label="Select a tool">
+      <button class="tile" data-tool="dcf" aria-pressed="true" aria-controls="panel">
+        <span class="tile-top"><span>Intrinsic valuation</span><span class="tile-state">Select</span></span>
+        <span class="tile-name">Discounted Cash Flow Valuation</span>
+        <span class="tile-stat">All US-listed companies · FMP API</span>
+      </button>
+      <button class="tile" data-tool="comps" aria-pressed="false" aria-controls="panel">
+        <span class="tile-top"><span>Relative valuation</span><span class="tile-state">Select</span></span>
+        <span class="tile-name">Comparable Company Analysis</span>
+        <span class="tile-stat">All US-listed companies · 11 sectors</span>
+      </button>
+      <button class="tile" data-tool="portfolio" aria-pressed="false" aria-controls="panel">
+        <span class="tile-top"><span>Portfolio construction</span><span class="tile-state">Select</span></span>
+        <span class="tile-name">Portfolio Optimisation</span>
+        <span class="tile-stat">Monte Carlo · efficient frontier</span>
+      </button>
+    </nav>
+
+    <section class="panel" id="panel" data-tool="dcf" aria-live="polite"></section>
+
+    <footer>
+      <span>Built with HTML, CSS and JavaScript. DCF and Comps use live data from Financial Modelling Prep.</span>
+      <span>Each tool opens in a new tab.</span>
+    </footer>
+  </div>
+</main>
+
+<script>
+const ARROW = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3h8v8M13 3 3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+const TOOLS = {
+  dcf: {
+    eyebrow: "Intrinsic valuation · DCF",
+    name: "Discounted Cash Flow Valuation Tool",
+    url: "https://sachin-m23.github.io/DCFValuationTool/",
+    summary: "A ratio-driven DCF that forecasts free cash flow, discounts it at WACC and adds a terminal value, then bridges enterprise value to a per-share figure and compares it with the market price to give implied upside and annualised return.",
+    chips: ["FMP API", "5 yrs of statements", "CAPM WACC", "Gordon growth", "Mid-year discounting"],
+    facts: [["All US", "listed companies covered"], ["5", "fiscal years of history"], ["4", "recent earnings reports"], ["3", "scenarios: bear / base / bull"]],
+    left: [
+      { h: "How the model is built", p: [
+        "Every driver is calibrated to the company's own history. EBIT margin, D&A, capex and working-capital intensity are measured as ratios of revenue over five fiscal years, and their trend is carried forward in damped, capped form rather than averaged away.",
+        "Revenue is projected from recent earnings and the current growth path, fading gradually toward the terminal rate. Terminal capex converges to D&A plus growth-sustaining reinvestment, so the perpetuity only carries the spend it needs."
+      ]},
+      { h: "Cost of capital and terminal value", p: [
+        "WACC combines a CAPM cost of equity with an after-tax cost of debt, weighted by market cap and total debt. You can choose mid-year or year-end discounting.",
+        "The terminal value is cross-checked as an implied exit EV/EBITDA against today's market multiple, and its share of enterprise value is reported so an over-reliant model shows up straight away."
+      ]}
+    ],
+    right: [
+      { h: "Outputs", list: [
+        "Full free-cash-flow forecast",
+        "Cost-of-capital and valuation bridge",
+        "WACC × terminal-growth sensitivity grid",
+        "Bear / base / bull scenarios and price-path fan",
+        "Value waterfall: yearly PV → terminal value → net debt → equity",
+        "Recent earnings panel: consensus vs actual revenue and EPS, beat or miss, next report date",
+        "Audit trail of every input pulled from the API"
+      ]}
+    ]
+  },
+  comps: {
+    eyebrow: "Relative valuation · Comps",
+    name: "Comparable Company Analysis Dashboard",
+    url: "https://sachin-m23.github.io/CompsDashboard/",
+    summary: "A sector-aware screener that benchmarks US-listed companies against their peers on the multiple that suits its sector's economics, flagging which names look cheap or expensive versus the group and why.",
+    chips: ["FMP API", "All US-listed", "GICS sectors", "Peer medians", "0–100 value score"],
+    facts: [["All US", "listed companies covered"], ["11", "GICS sectors"], ["64", "industries to filter by"], ["0–100", "blended value score"]],
+    left: [
+      { h: "Sector-appropriate multiples", table: [
+        ["Tech, Comms, Cons. Disc., Staples, Health Care, Real Estate", "EV/EBITDA", "Capital-structure neutral; suits established margins. Real Estate stays here as EBITDA is the closest proxy to FFO."],
+        ["Industrials, Materials, Energy, Utilities", "EV/EBIT", "Charges for depreciation, so capex-heavy businesses aren't flattered."],
+        ["Financials", "P/B", "Leverage is the business model, which distorts EV-based multiples."]
+      ]},
+      { h: "Cross-checks and quality", p: [
+        "Each primary multiple is paired with secondary ones such as EV/Sales, EV/FCF and EV/OCF, with P/E applied everywhere as an equity-level check.",
+        "A quality metric separates genuinely undervalued names from cheap-for-a-reason ones: EBITDA margin for most sectors, and ROE against a CAPM cost of equity for Financials."
+      ]}
+    ],
+    right: [
+      { h: "What you can do", list: [
+        "Narrow any sector to a single industry for a like-for-like peer set",
+        "Recalculate medians, quartiles, rankings and charts on the fly",
+        "Value a target on the peer median multiple (excluding itself) and see implied share price and upside",
+        "Sort the full comparables table",
+        "Compare via bar, scatter and grouped-bar charts"
+      ]}
+    ]
+  },
+  portfolio: {
+    eyebrow: "Portfolio construction · MPT",
+    name: "Portfolio Optimisation Dashboard",
+    url: "https://sachin-m23.github.io/portfolio-dashboard/",
+    summary: "Applies Modern Portfolio Theory and Monte Carlo simulation to build an efficient frontier from your own price history, then optimises allocation and reports risk, return, Sharpe ratio, correlation, drawdown and diversification.",
+    chips: ["Upload .xlsx / .csv", "Monte Carlo", "Efficient frontier", "Sharpe ratio", "Drawdowns"],
+    facts: [["MPT", "mean-variance framework"], ["Daily", "closing prices as input"], [".xlsx", "or .csv accepted"], ["In-browser", "no install needed"]],
+    left: [
+      { h: "How to use it", steps: [
+        "Prepare daily closing prices for each asset, or use the Portfolio_Example file.",
+        "Make sure each asset has a Close price column.",
+        "Upload the file to the dashboard.",
+        "Review the efficient frontier, optimal weights and portfolio analytics."
+      ]},
+      { h: "Data requirements", p: [
+        "Historical daily market data in Excel (.xlsx) or CSV (.csv). The Close column for each asset drives the return calculations, the optimisation and every analytic on the page."
+      ]}
+    ],
+    right: [
+      { h: "Analytics", list: [
+        "Efficient frontier from simulated portfolios",
+        "Optimal allocation weights",
+        "Risk, return and Sharpe ratio",
+        "Correlation between assets",
+        "Maximum drawdown",
+        "Diversification analysis"
+      ]}
+    ]
+  }
+};
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function renderBlock(b) {
+  let inner = "";
+  if (b.p) inner = b.p.map(t => `<p>${esc(t)}</p>`).join("");
+  if (b.list) inner = `<ul class="list">${b.list.map(t => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  if (b.steps) inner = `<ol class="steps">${b.steps.map(t => `<li>${esc(t)}</li>`).join("")}</ol>`;
+  if (b.table) inner = `<div class="table-wrap"><table><thead><tr><th>Sectors</th><th>Primary</th><th>Why</th></tr></thead><tbody>${
+    b.table.map(r => `<tr><td>${esc(r[0])}</td><td class="m">${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")
+  }</tbody></table></div>`;
+  return `<div class="block"><h3>${esc(b.h)}</h3>${inner}</div>`;
+}
+
+function render(id) {
+  const t = TOOLS[id];
+  const panel = document.getElementById("panel");
+  panel.dataset.tool = id;
+  panel.innerHTML = `
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">${esc(t.eyebrow)}</span>
+        <h2>${esc(t.name)}</h2>
+        <p class="summary">${esc(t.summary)}</p>
+        <div class="chips">${t.chips.map(c => `<span class="chip">${esc(c)}</span>`).join("")}</div>
+      </div>
+      <div class="cta">
+        <a class="open" href="${t.url}" target="_blank" rel="noopener">Open full tool ${ARROW}</a>
+        <span class="url">${esc(t.url.replace("https://", ""))}</span>
+      </div>
+    </div>
+    <div class="facts">${t.facts.map(f => `<div class="fact"><b>${esc(f[0])}</b><span>${esc(f[1])}</span></div>`).join("")}</div>
+    <div class="panel-body">
+      <div class="col">${t.left.map(renderBlock).join("")}</div>
+      <div class="col">${t.right.map(renderBlock).join("")}</div>
+    </div>`;
+  document.querySelectorAll(".tile").forEach(b => {
+    const on = b.dataset.tool === id;
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.querySelector(".tile-state").textContent = on ? "Selected" : "Select";
+  });
+  try { localStorage.setItem("vt-tool", id); } catch (e) {}
+}
+
+document.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => render(b.dataset.tool)));
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea")) return;
+  const map = { "1": "dcf", "2": "comps", "3": "portfolio" };
+  if (map[e.key]) render(map[e.key]);
+});
+
+let start = "dcf";
+const hash = location.hash.slice(1);
+if (TOOLS[hash]) start = hash;
+else { try { const s = localStorage.getItem("vt-tool"); if (TOOLS[s]) start = s; } catch (e) {} }
+render(start);
+</script>
+</body>
+</html>
